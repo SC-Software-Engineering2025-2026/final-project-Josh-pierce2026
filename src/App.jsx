@@ -14,6 +14,7 @@ export default function App() {
   const [inSession, setInSession] = useState(true);
   const [classMap, setClassMap] = useState({});
   const [showClassEditor, setShowClassEditor] = useState(false);
+  const [toast, setToast] = useState({ message: "", visible: false });
   const [notification, setNotification] = useState({
     title: "",
     subtitle: "",
@@ -72,6 +73,16 @@ export default function App() {
     else if (dow === 3) setScheduleMode("wednesday");
     else setScheduleMode("standard");
   }, [syncToClock, now]);
+
+  // auto-hide toast after a short time
+  useEffect(() => {
+    if (!toast.visible) return;
+    const t = setTimeout(
+      () => setToast((s) => ({ ...s, visible: false })),
+      2800
+    );
+    return () => clearTimeout(t);
+  }, [toast.visible]);
 
   return (
     <div className="app">
@@ -189,6 +200,7 @@ export default function App() {
               onSave={(m) => {
                 setClassMap(m);
                 setShowClassEditor(false);
+                setToast({ message: "Class names saved", visible: true });
               }}
               onCancel={() => setShowClassEditor(false)}
             />
@@ -273,6 +285,12 @@ export default function App() {
               Dismiss
             </button>
           </div>
+        </div>
+      )}
+      {/* small toast */}
+      {toast.visible && (
+        <div className="toast" role="status" aria-live="polite">
+          {toast.message}
         </div>
       )}
     </div>

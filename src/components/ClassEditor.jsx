@@ -7,7 +7,10 @@ export default function ClassEditor({ initialMap = {}, onSave, onCancel }) {
 
   function update(letter, value) {
     const next = { ...(draft || {}) };
-    if (value && value.trim().length) next[letter] = value.trim();
+    // allow spaces inside class titles (and preserve entered spacing);
+    // only treat the input as empty when it contains no non-space characters
+    if (value != null && value.replace(/\s/g, "").length > 0)
+      next[letter] = value;
     else delete next[letter];
     setDraft(next);
   }
@@ -17,12 +20,22 @@ export default function ClassEditor({ initialMap = {}, onSave, onCancel }) {
   }
 
   function doSave() {
+    // when saving, trim leading/trailing spaces for each class name
+    // preserve internal spaces but remove edges; drop entries that become empty
+    const trimmed = {};
     try {
-      localStorage.setItem("sierra_classes", JSON.stringify(draft));
+      Object.keys(draft || {}).forEach((k) => {
+        const v = draft[k];
+        if (typeof v === "string") {
+          const t = v.trim();
+          if (t.length) trimmed[k] = t;
+        }
+      });
+      localStorage.setItem("sierra_classes", JSON.stringify(trimmed));
     } catch (e) {
-      // ignore
+      // ignore storage errors
     }
-    onSave && onSave(draft);
+    onSave && onSave(trimmed);
   }
 
   return (

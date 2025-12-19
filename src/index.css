@@ -248,3 +248,17 @@ body {
   border: none;
   cursor: pointer;
 }
+
+/* small non-blocking toast */
+.toast {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  background: var(--panel);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.15);
+  z-index: 1400;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
