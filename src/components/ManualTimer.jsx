@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 
-export default function ManualTimer() {
+export default function ManualTimer({ onFinish }) {
   const [input, setInput] = useState("00:01:00");
   const [remaining, setRemaining] = useState(0);
   const [running, setRunning] = useState(false);
@@ -28,6 +28,12 @@ export default function ManualTimer() {
           if (r <= 1) {
             clearInterval(intervalRef.current);
             setRunning(false);
+            // notify parent that manual timer finished
+            try {
+              onFinish && onFinish({ name: "Manual Timer" });
+            } catch (e) {
+              // swallow errors from caller
+            }
             return 0;
           }
           return r - 1;
@@ -58,8 +64,18 @@ export default function ManualTimer() {
     <div>
       <div className="panel">
         <div className="muted">Manual Timer</div>
-        <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            marginTop: 8,
+            alignItems: "center",
+          }}
+        >
+          {/* editable dropdown via datalist: shows presets but allows typing numbers */}
           <input
+            list="presetTimes"
+            aria-label="Manual timer input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             style={{
@@ -68,8 +84,20 @@ export default function ManualTimer() {
               background: "#071029",
               color: "#e6eef7",
               border: "1px solid #123",
+              minWidth: 160,
             }}
+            placeholder="MM:SS or HH:MM:SS or minutes"
           />
+          <datalist id="presetTimes">
+            <option value="00:00:10">10 seconds</option>
+            <option value="00:00:30">30 seconds</option>
+            <option value="00:01:00">1 minute</option>
+            <option value="00:05:00">5 minutes</option>
+            <option value="00:10:00">10 minutes</option>
+            <option value="00:15:00">15 minutes</option>
+            <option value="00:30:00">30 minutes</option>
+            <option value="01:00:00">1 hour</option>
+          </datalist>
           <button className="mode-btn" onClick={start}>
             Start
           </button>

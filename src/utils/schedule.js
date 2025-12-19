@@ -19,7 +19,20 @@ const rotations = {
 // Build schedule: returns array of periods {type: 'block'|'passing'|'lab'|'lunch', name, start, end}
 // mode: 'standard' | 'monday' | 'wednesday'
 export function buildDaySchedule(dayNumber, mode = "standard") {
-  const blocks = rotations[dayNumber] || rotations[1];
+  let blocks;
+  if (dayNumber === 0) {
+    // Day 0: numbered periods instead of lettered blocks
+    blocks = [
+      "Period 1",
+      "Period 2",
+      "Period 3",
+      "Period 4",
+      "Period 5",
+      "Period 6",
+    ];
+  } else {
+    blocks = rotations[dayNumber] || rotations[1];
+  }
   // start at 8:30
   const start = new Date();
   start.setHours(8, 30, 0, 0);

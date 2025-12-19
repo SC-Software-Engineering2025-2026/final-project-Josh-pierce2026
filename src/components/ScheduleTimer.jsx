@@ -6,6 +6,7 @@ export default function ScheduleTimer({
   mode = "standard",
   onPeriodEnd,
   syncToClock = true,
+  classMap = {},
 }) {
   const [periods, setPeriods] = useState([]);
   const [now, setNow] = useState(new Date());
@@ -107,6 +108,35 @@ export default function ScheduleTimer({
     }
   }, [now, periods, countdown, syncToClock]);
 
+  // when sync mode is toggled on, immediately stop any manual countdown and
+  // jump to the correct active period/timer according to device time
+  useEffect(() => {
+    if (!syncToClock) return;
+    if (!periods.length) return;
+    // stop any manual countdown
+    clearCountdown();
+    setCountdown(0);
+    const cur = new Date();
+    setNow(cur);
+
+    const firstStart = periods[0].start;
+    const lastEnd = periods[periods.length - 1].end;
+    const nowInSession = cur >= firstStart && cur < lastEnd;
+    setInSession(nowInSession);
+    if (!nowInSession) {
+      setActiveIndex(-1);
+      return;
+    }
+
+    const idx = periods.findIndex((per) => cur >= per.start && cur < per.end);
+    if (idx !== -1) {
+      setActiveIndex(idx);
+    } else {
+      const up = periods.findIndex((per) => per.start > cur);
+      setActiveIndex(up === -1 ? periods.length - 1 : up);
+    }
+  }, [syncToClock, periods]);
+
   // when synced to clock, notify once when a period ends
   useEffect(() => {
     if (!syncToClock) return;
@@ -147,7 +177,17 @@ export default function ScheduleTimer({
   } else if (active) {
     remaining = Math.max(0, Math.ceil((active.end - now) / 1000));
   }
-
+  function displayName(p) {
+    // if it's a lettered block and we have a mapping for it, show 'A - Class Name'
+    if (p && p.type === "block") {
+      const base = p.name;
+      // only apply mapping for single-letter names (A-H)
+      if (/^[A-H]$/.test(base) && classMap && classMap[base]) {
+        return `${base} - ${classMap[base]}`;
+      }
+    }
+    return p ? p.name : "";
+  }
   return (
     <div>
       <div className="panel">
@@ -180,7 +220,8 @@ export default function ScheduleTimer({
             >
               <div>
                 <div style={{ fontSize: 18, fontWeight: 700 }}>
-                  {active.name} <span className="muted">({active.type})</span>
+                  {displayName(active)}{" "}
+                  <span className="muted">({active.type})</span>
                 </div>
                 <div className="muted">
                   {formatTime(active.start)} - {formatTime(active.end)}
@@ -195,22 +236,26 @@ export default function ScheduleTimer({
       </div>
 
       <div className="list">
-        {periods.map((p, idx) => (
-          <div
-            key={idx}
-            className={"block" + (idx === activeIndex ? " active" : "")}
-            onClick={() => jumpTo(idx)}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <div>
-                {p.name} <span className="muted">({p.type})</span>
-              </div>
-              <div className="muted">
-                {formatTime(p.start)} - {formatTime(p.end)}
+        {periods.map((p, idx) => {
+          // hide passing periods from the visible list but keep them in the schedule
+          if (p.type === "passing") return null;
+          return (
+            <div
+              key={idx}
+              className={"block" + (idx === activeIndex ? " active" : "")}
+              onClick={() => jumpTo(idx)}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <div>
+                  {displayName(p)} <span className="muted">({p.type})</span>
+                </div>
+                <div className="muted">
+                  {formatTime(p.start)} - {formatTime(p.end)}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

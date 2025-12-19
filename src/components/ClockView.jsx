@@ -10,7 +10,7 @@ export default function ClockView() {
   return (
     <div className="panel">
       <div className="muted">Current Time</div>
-      <div style={{ fontSize: 38, fontWeight: 700, marginTop: 6 }}>
+      <div className="clock-value" style={{ marginTop: 6 }}>
         {now.toLocaleTimeString()}
       </div>
       <div className="muted">{now.toLocaleDateString()}</div>

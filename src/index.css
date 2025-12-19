@@ -164,9 +164,12 @@ body {
   border-radius: 6px;
 }
 .timer {
-  font-size: 28px;
-  font-weight: 600;
-  margin-top: 8px;
+  font-size: 96px;
+  font-weight: 800;
+  margin: 18px 0;
+  letter-spacing: 1px;
+  text-align: center;
+  line-height: 1;
 }
 .muted {
   color: var(--muted);
@@ -174,4 +177,74 @@ body {
 }
 .list {
   margin-top: 12px;
+}
+
+/* make the timer the visual focus on larger viewports */
+@media (max-width: 900px) {
+  .timer {
+    font-size: 64px;
+  }
+}
+@media (max-width: 480px) {
+  .timer {
+    font-size: 40px;
+  }
+}
+
+/* Stable numeric layout for timers and clocks: use monospace and fixed character width
+   so digits don't shift when the number of characters changes. */
+.timer,
+.clock-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono",
+    "Liberation Mono", monospace;
+  /* reserve space for HH:MM:SS (8 characters) so width doesn't change */
+  display: inline-block;
+  min-width: 8ch;
+  max-width: 8ch;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.clock-value {
+  font-size: 38px;
+  font-weight: 700;
+}
+
+/* large overlay notification for "Time is up!" */
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.6);
+  z-index: 1200;
+}
+.overlay-content {
+  background: white;
+  color: var(--text);
+  padding: 28px 36px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.2);
+  min-width: 320px;
+  max-width: 90%;
+}
+.overlay-title {
+  font-size: 44px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.overlay-subtitle {
+  font-size: 20px;
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+.overlay-close {
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  cursor: pointer;
 }
