@@ -14,6 +14,10 @@ export default function App() {
   const [inSession, setInSession] = useState(true);
   const [classMap, setClassMap] = useState({});
   const [showClassEditor, setShowClassEditor] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [scheduleCollapsed, setScheduleCollapsed] = useState(false);
+  const [scheduleSound, setScheduleSound] = useState("chime");
+  const [manualSound, setManualSound] = useState("beep");
   const [toast, setToast] = useState({ message: "", visible: false });
   const [notification, setNotification] = useState({
     title: "",
@@ -28,8 +32,94 @@ export default function App() {
     const title = "Time is up!";
     const subtitle = period && period.name ? period.name : "";
     setNotification({ title, subtitle, visible: true });
+    // play schedule sound
+    playSound(scheduleSound);
     // auto-hide after 6 seconds
     setTimeout(() => setNotification((n) => ({ ...n, visible: false })), 6000);
+  }
+
+  function handleManualFinish(label = "Manual timer") {
+    const title = "Time is up!";
+    const subtitle = label;
+    setNotification({ title, subtitle, visible: true });
+    playSound(manualSound);
+    setTimeout(() => setNotification((n) => ({ ...n, visible: false })), 6000);
+  }
+
+  // simple WebAudio-based player (no external assets). Creates tones/envelopes per id.
+  let audioCtx = null;
+  function getAudioCtx() {
+    if (!audioCtx) {
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      } catch (e) {
+        audioCtx = null;
+      }
+    }
+    return audioCtx;
+  }
+
+  function playSound(id) {
+    if (!id || id === "none") return;
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    const t0 = ctx.currentTime;
+    if (id === "beep") {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sine";
+      o.frequency.value = 880;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(0.8, t0 + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.6);
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.start(t0);
+      o.stop(t0 + 0.65);
+    } else if (id === "chime") {
+      // arpeggiated chime
+      const freqs = [880, 1320, 1760];
+      freqs.forEach((f, i) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "sine";
+        o.frequency.value = f;
+        const s = t0 + i * 0.08;
+        g.gain.setValueAtTime(0, s);
+        g.gain.linearRampToValueAtTime(0.7, s + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, s + 1.2);
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.start(s);
+        o.stop(s + 1.25);
+      });
+    } else if (id === "bell") {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "triangle";
+      o.frequency.setValueAtTime(600, t0);
+      o.frequency.exponentialRampToValueAtTime(220, t0 + 2.0);
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(0.9, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, t0 + 2.2);
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.start(t0);
+      o.stop(t0 + 2.25);
+    } else if (id === "gong") {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sawtooth";
+      o.frequency.setValueAtTime(200, t0);
+      o.frequency.exponentialRampToValueAtTime(60, t0 + 3.0);
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(0.9, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 4.2);
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.start(t0);
+      o.stop(t0 + 4.5);
+    }
   }
 
   // keep a live clock to re-evaluate whether it's school hours
@@ -47,6 +137,24 @@ export default function App() {
       // ignore
     }
   }, []);
+
+  // load saved sound preferences
+  useEffect(() => {
+    try {
+      const s = localStorage.getItem("sierra_schedule_sound");
+      const m = localStorage.getItem("sierra_manual_sound");
+      if (s) setScheduleSound(s);
+      if (m) setManualSound(m);
+    } catch (e) {}
+  }, []);
+
+  // persist sound preferences
+  useEffect(() => {
+    try {
+      localStorage.setItem("sierra_schedule_sound", scheduleSound);
+      localStorage.setItem("sierra_manual_sound", manualSound);
+    } catch (e) {}
+  }, [scheduleSound, manualSound]);
 
   // compute whether current time falls into the day's schedule window
   useEffect(() => {
@@ -86,144 +194,21 @@ export default function App() {
 
   return (
     <div className="app">
-      <div className="sidebar">
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
+      <div className="top-controls">
+        <button
+          className="sidebar-toggle"
+          onClick={() => setSidebarCollapsed((s) => !s)}
+          aria-label={sidebarCollapsed ? "Open settings" : "Close settings"}
         >
-          <h3>Sierra Schedule</h3>
-        </div>
-
-        <div style={{ marginTop: 8 }}>
-          <div className="muted">Mode</div>
-          <div
-            style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}
-          >
-            <button
-              className={
-                "mode-btn" + (modeView === "schedule" ? " active" : "")
-              }
-              onClick={() => setModeView("schedule")}
-            >
-              Schedule
-            </button>
-            <button
-              className={"mode-btn" + (modeView === "manual" ? " active" : "")}
-              onClick={() => setModeView("manual")}
-            >
-              Manual
-            </button>
-          </div>
-        </div>
-
-        <div style={{ marginTop: 12 }}>
-          <div className="muted">Schedule Sync</div>
-          <div
-            style={{
-              display: "flex",
-              gap: 8,
-              alignItems: "center",
-              marginTop: 8,
-            }}
-          >
-            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <input
-                type="checkbox"
-                checked={syncToClock}
-                disabled={!inSession}
-                onChange={(e) => inSession && setSyncToClock(e.target.checked)}
-              />
-              <span className="muted">Sync to device time</span>
-            </label>
-            {!inSession && (
-              <div className="muted" style={{ fontSize: 12 }}>
-                Sync disabled: outside school hours
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div style={{ marginTop: 12 }}>
-          <div className="muted">Monday / Wednesday</div>
-          <div
-            style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}
-          >
-            <button
-              className={
-                "mode-btn" + (scheduleMode === "standard" ? " active" : "")
-              }
-              onClick={() => setScheduleMode("standard")}
-            >
-              Standard
-            </button>
-            <button
-              className={
-                "mode-btn" + (scheduleMode === "monday" ? " active" : "")
-              }
-              onClick={() => setScheduleMode("monday")}
-            >
-              Monday
-            </button>
-            <button
-              className={
-                "mode-btn" + (scheduleMode === "wednesday" ? " active" : "")
-              }
-              onClick={() => setScheduleMode("wednesday")}
-            >
-              Wednesday
-            </button>
-          </div>
-        </div>
-
-        <div style={{ marginTop: 12 }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <div className="muted">Classes</div>
-            <button
-              className="mode-btn"
-              onClick={() => setShowClassEditor((s) => !s)}
-            >
-              {showClassEditor ? "Done" : "Edit classes"}
-            </button>
-          </div>
-          {showClassEditor && (
-            <ClassEditor
-              initialMap={classMap}
-              onSave={(m) => {
-                setClassMap(m);
-                setShowClassEditor(false);
-                setToast({ message: "Class names saved", visible: true });
-              }}
-              onCancel={() => setShowClassEditor(false)}
-            />
-          )}
-        </div>
-
-        <div style={{ marginTop: 12 }}>
-          <div className="muted">Days</div>
-          <div style={{ marginTop: 8 }}>
-            {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((d) => (
-              <button
-                key={d}
-                onClick={() => {
-                  setSelectedDay(d);
-                  setModeView("schedule");
-                }}
-                className={"day-btn" + (selectedDay === d ? " active" : "")}
-              >
-                Day {d}
-              </button>
-            ))}
-          </div>
-        </div>
+          {sidebarCollapsed ? "Open settings" : "Close settings"}
+        </button>
+        <button
+          className="schedule-toggle"
+          onClick={() => setScheduleCollapsed((s) => !s)}
+          aria-label={scheduleCollapsed ? "Show schedule" : "Hide schedule"}
+        >
+          {scheduleCollapsed ? "Show schedule" : "Hide schedule"}
+        </button>
       </div>
 
       <div className="main">
@@ -232,35 +217,255 @@ export default function App() {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            gap: 8,
           }}
         >
-          <h2>
+          <h2 style={{ margin: 0 }}>
             Day {selectedDay} • {scheduleMode}
           </h2>
-          <div className="muted">
-            Choose a day or a block to jump; manual timer accepts MM:SS or
-            HH:MM:SS
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <div className="muted">
+              Choose a day or a block to jump; manual timer accepts MM:SS or
+              HH:MM:SS
+            </div>
           </div>
         </div>
 
-        <div style={{ marginTop: 12 }}>
-          {modeView === "schedule" && (
-            <ScheduleTimer
-              day={selectedDay}
-              mode={scheduleMode}
-              syncToClock={syncToClock}
-              onPeriodEnd={handlePeriodEnd}
-              classMap={classMap}
-            />
-          )}
-          {modeView === "manual" && (
-            <ManualTimer onFinish={(p) => handlePeriodEnd(p)} />
-          )}
-        </div>
+        <div className="content">
+          <div style={{ width: "100%" }}>
+            {modeView === "schedule" && (
+              <ScheduleTimer
+                day={selectedDay}
+                mode={scheduleMode}
+                syncToClock={syncToClock}
+                onPeriodEnd={handlePeriodEnd}
+                classMap={classMap}
+                showList={!scheduleCollapsed}
+              />
+            )}
+            {modeView === "manual" && (
+              <ManualTimer
+                onFinish={() => handleManualFinish("Manual Timer")}
+              />
+            )}
+          </div>
 
-        <div style={{ marginTop: 18 }}>
-          {/* persistent clock at bottom */}
-          <ClockView />
+          {/* settings panel shown below the schedule when open */}
+          {!sidebarCollapsed && (
+            <div className="settings-panel" style={{ marginTop: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <div className="muted">Settings</div>
+              </div>
+
+              <div style={{ marginTop: 8 }}>
+                <div className="muted">Mode</div>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    marginTop: 8,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <button
+                    className={
+                      "mode-btn" + (modeView === "schedule" ? " active" : "")
+                    }
+                    onClick={() => setModeView("schedule")}
+                  >
+                    Schedule
+                  </button>
+                  <button
+                    className={
+                      "mode-btn" + (modeView === "manual" ? " active" : "")
+                    }
+                    onClick={() => setModeView("manual")}
+                  >
+                    Manual
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ marginTop: 12 }}>
+                <div className="muted">Schedule Sync</div>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    alignItems: "center",
+                    marginTop: 8,
+                  }}
+                >
+                  <label
+                    style={{ display: "flex", alignItems: "center", gap: 8 }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={syncToClock}
+                      disabled={!inSession}
+                      onChange={(e) =>
+                        inSession && setSyncToClock(e.target.checked)
+                      }
+                    />
+                    <span className="muted">Sync to device time</span>
+                  </label>
+                  {!inSession && (
+                    <div className="muted" style={{ fontSize: 12 }}>
+                      Sync disabled: outside school hours
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ marginTop: 12 }}>
+                <div className="muted">Monday / Wednesday</div>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    marginTop: 8,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <button
+                    className={
+                      "mode-btn" +
+                      (scheduleMode === "standard" ? " active" : "")
+                    }
+                    onClick={() => setScheduleMode("standard")}
+                  >
+                    Standard
+                  </button>
+                  <button
+                    className={
+                      "mode-btn" + (scheduleMode === "monday" ? " active" : "")
+                    }
+                    onClick={() => setScheduleMode("monday")}
+                  >
+                    Monday
+                  </button>
+                  <button
+                    className={
+                      "mode-btn" +
+                      (scheduleMode === "wednesday" ? " active" : "")
+                    }
+                    onClick={() => setScheduleMode("wednesday")}
+                  >
+                    Wednesday
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ marginTop: 12 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <div className="muted">Classes</div>
+                  <button
+                    className="mode-btn"
+                    onClick={() => setShowClassEditor((s) => !s)}
+                  >
+                    {showClassEditor ? "Done" : "Edit classes"}
+                  </button>
+                </div>
+                {showClassEditor && (
+                  <ClassEditor
+                    initialMap={classMap}
+                    onSave={(m) => {
+                      setClassMap(m);
+                      setShowClassEditor(false);
+                      setToast({ message: "Class names saved", visible: true });
+                    }}
+                    onCancel={() => setShowClassEditor(false)}
+                  />
+                )}
+              </div>
+
+              <div style={{ marginTop: 12 }}>
+                <div className="muted">Sounds</div>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 12,
+                    marginTop: 8,
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <label
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      minWidth: 180,
+                    }}
+                  >
+                    <span className="muted">Schedule sound</span>
+                    <select
+                      value={scheduleSound}
+                      onChange={(e) => setScheduleSound(e.target.value)}
+                      className="mode-btn"
+                    >
+                      <option value="none">None</option>
+                      <option value="beep">Beep</option>
+                      <option value="chime">Chime</option>
+                      <option value="bell">Bell</option>
+                      <option value="gong">Gong</option>
+                    </select>
+                  </label>
+
+                  <label
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      minWidth: 180,
+                    }}
+                  >
+                    <span className="muted">Manual timer sound</span>
+                    <select
+                      value={manualSound}
+                      onChange={(e) => setManualSound(e.target.value)}
+                      className="mode-btn"
+                    >
+                      <option value="none">None</option>
+                      <option value="beep">Beep</option>
+                      <option value="chime">Chime</option>
+                      <option value="bell">Bell</option>
+                      <option value="gong">Gong</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+
+              <div style={{ marginTop: 12 }}>
+                <div className="muted">Days</div>
+                <div style={{ marginTop: 8 }}>
+                  {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((d) => (
+                    <button
+                      key={d}
+                      onClick={() => {
+                        setSelectedDay(d);
+                        setModeView("schedule");
+                      }}
+                      className={
+                        "day-btn" + (selectedDay === d ? " active" : "")
+                      }
+                    >
+                      Day {d}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div style={{ marginTop: 18 }}>
+            {/* persistent clock at bottom */}
+            <ClockView />
+          </div>
         </div>
       </div>
 

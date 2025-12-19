@@ -5,6 +5,7 @@ export default function ManualTimer({ onFinish }) {
   const [remaining, setRemaining] = useState(0);
   const [running, setRunning] = useState(false);
   const intervalRef = useRef(null);
+  const [now, setNow] = useState(new Date());
 
   function parseInput(str) {
     // accept HH:MM:SS or MM:SS or minutes number
@@ -42,6 +43,12 @@ export default function ManualTimer({ onFinish }) {
     }
     return () => clearInterval(intervalRef.current);
   }, [running]);
+
+  // live clock for showing current time under the big countdown
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   function start() {
     const sec = parseInput(input);
@@ -102,7 +109,18 @@ export default function ManualTimer({ onFinish }) {
             Start
           </button>
         </div>
-        <div className="timer">{formatSeconds(remaining)}</div>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <div className="timer">{formatSeconds(remaining)}</div>
+          <div className="clock-value" style={{ marginTop: 6 }}>
+            {now.toLocaleTimeString()}
+          </div>
+        </div>
         {remaining === 0 && !running && (
           <div className="muted">Time is up!</div>
         )}

@@ -7,6 +7,7 @@ export default function ScheduleTimer({
   onPeriodEnd,
   syncToClock = true,
   classMap = {},
+  showList = true,
 }) {
   const [periods, setPeriods] = useState([]);
   const [now, setNow] = useState(new Date());
@@ -227,7 +228,18 @@ export default function ScheduleTimer({
                   {formatTime(active.start)} - {formatTime(active.end)}
                 </div>
               </div>
-              <div className="timer">{formatSeconds(remaining)}</div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <div className="timer">{formatSeconds(remaining)}</div>
+                <div className="clock-value" style={{ marginTop: 6 }}>
+                  {now.toLocaleTimeString()}
+                </div>
+              </div>
             </div>
           </>
         ) : (
@@ -235,28 +247,33 @@ export default function ScheduleTimer({
         )}
       </div>
 
-      <div className="list">
-        {periods.map((p, idx) => {
-          // hide passing periods from the visible list but keep them in the schedule
-          if (p.type === "passing") return null;
-          return (
-            <div
-              key={idx}
-              className={"block" + (idx === activeIndex ? " active" : "")}
-              onClick={() => jumpTo(idx)}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <div>
-                  {displayName(p)} <span className="muted">({p.type})</span>
-                </div>
-                <div className="muted">
-                  {formatTime(p.start)} - {formatTime(p.end)}
+      {showList && (
+        <div className="list">
+          {periods.map((p, idx) => {
+            // hide passing periods from the visible list but keep them in the schedule
+            if (p.type === "passing") return null;
+            return (
+              <div
+                key={idx}
+                className={"block" + (idx === activeIndex ? " active" : "")}
+                onClick={() => jumpTo(idx)}
+              >
+                {/* two-line layout: first line = name + type, second line = times */}
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 6 }}
+                >
+                  <div style={{ fontWeight: 700 }}>
+                    {displayName(p)} <span className="muted">({p.type})</span>
+                  </div>
+                  <div className="muted">
+                    {formatTime(p.start)} - {formatTime(p.end)}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

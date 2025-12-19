@@ -113,6 +113,21 @@ body {
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
 }
+
+/* center the main content (timer) vertically and horizontally */
+.main {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 40px);
+}
+.main .content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+}
 .day-btn {
   display: inline-block;
   padding: 8px 10px;
@@ -164,12 +179,14 @@ body {
   border-radius: 6px;
 }
 .timer {
-  font-size: 96px;
-  font-weight: 800;
-  margin: 18px 0;
+  /* make the timer very large and responsive so it takes up most of the view */
+  font-size: clamp(64px, 16vw, 420px);
+  font-weight: 900;
+  margin: 6px 0;
   letter-spacing: 1px;
   text-align: center;
   line-height: 1;
+  padding: 8px 0;
 }
 .muted {
   color: var(--muted);
@@ -177,6 +194,41 @@ body {
 }
 .list {
   margin-top: 12px;
+}
+
+/* collapsed sidebar toggle button (visible when sidebar is hidden) */
+/* top-right control group containing the settings toggle and schedule toggle */
+.top-controls {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+  z-index: 1500;
+}
+.top-controls .sidebar-toggle,
+.top-controls .schedule-toggle {
+  background: var(--panel);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+}
+.top-controls .schedule-toggle {
+  padding: 8px 10px;
+}
+
+.sidebar-collapsed {
+  display: none;
+}
+
+.settings-panel {
+  background: var(--panel);
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
 }
 
 /* make the timer the visual focus on larger viewports */
