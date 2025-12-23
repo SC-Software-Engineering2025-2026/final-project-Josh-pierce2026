@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { RatingStars } from "./RatingStars.jsx";
 
 export function MediaList({
@@ -8,6 +8,8 @@ export function MediaList({
   onRemove,
   view = "list",
 }) {
+  const [expandedDescriptions, setExpandedDescriptions] = useState({});
+
   if (!items.length) {
     return <div className="empty-state">Nothing logged here yet.</div>;
   }
@@ -17,6 +19,39 @@ export function MediaList({
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return "Unknown date";
     return d.toLocaleDateString();
+  };
+
+  const toggleDescription = (localId) => {
+    setExpandedDescriptions((prev) => ({
+      ...prev,
+      [localId]: !prev[localId],
+    }));
+  };
+
+  const renderDescription = (item) => {
+    if (!item.extra) return null;
+    const text = item.extra;
+    const LONG_THRESHOLD = 80;
+    const isLong = text.length > LONG_THRESHOLD;
+    if (!isLong) return null;
+
+    const isOpen = !!expandedDescriptions[item.localId];
+    const displayText = isOpen
+      ? text
+      : text.slice(0, LONG_THRESHOLD).trimEnd() + "…";
+
+    return (
+      <div className="media-description">
+        <span>{displayText}</span>
+        <button
+          type="button"
+          className="link-button"
+          onClick={() => toggleDescription(item.localId)}
+        >
+          {isOpen ? "Show less" : "Show more"}
+        </button>
+      </div>
+    );
   };
 
   if (view === "grid") {
@@ -35,10 +70,8 @@ export function MediaList({
             </div>
             <div className="media-card-body">
               <div className="media-title">{item.title}</div>
-              <div className="media-meta">
-                {item.meta}
-                {item.extra ? ` · ${item.extra}` : ""}
-              </div>
+              <div className="media-meta">{item.meta}</div>
+              {renderDescription(item)}
               {onUpdateNotes && (
                 <textarea
                   className="note-input"
@@ -97,10 +130,8 @@ export function MediaList({
           </div>
           <div className="media-main">
             <div className="media-title">{item.title}</div>
-            <div className="media-meta">
-              {item.meta}
-              {item.extra ? ` · ${item.extra}` : ""}
-            </div>
+            <div className="media-meta">{item.meta}</div>
+            {renderDescription(item)}
             {onUpdateNotes && (
               <textarea
                 className="note-input"
