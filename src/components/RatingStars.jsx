@@ -1,5 +1,11 @@
 import React from "react";
 
+// 5-star rating widget with half-star support.
+//
+// - Displays a fixed row of MAX_STARS stars.
+// - Click position inside a star (left/right) determines whether
+//   the change is by 0.5 or 1.0 for that star index.
+// - Calls onChange(nextRating) so parents can persist the value.
 const MAX_STARS = 5;
 
 export function RatingStars({ value, onChange }) {

@@ -1,7 +1,13 @@
+// TMDB search helpers for movies and TV shows.
+// These functions normalize results into a common shape used by the UI.
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const TMDB_IMG_BASE = "https://image.tmdb.org/t/p/w342";
 
+/**
+ * Low-level helper for TMDB search endpoints.
+ * Adds the API key and common params, then returns the `results` array.
+ */
 async function tmdbFetch(path, params = {}) {
   if (!TMDB_API_KEY) {
     console.warn("TMDB API key (VITE_TMDB_API_KEY) is not set.");
@@ -22,6 +28,10 @@ async function tmdbFetch(path, params = {}) {
   return data.results || [];
 }
 
+/**
+ * Search TMDB for movies by title.
+ * Returns simplified objects: { id, title, meta (year), extra (overview), coverUrl }.
+ */
 export async function searchMovies(query) {
   if (!query?.trim()) return [];
   const results = await tmdbFetch("/search/movie", { query });
@@ -36,6 +46,10 @@ export async function searchMovies(query) {
   }));
 }
 
+/**
+ * Search TMDB for TV shows by name.
+ * Returns simplified objects: { id, title, meta (year), extra (overview), coverUrl }.
+ */
 export async function searchTvShows(query) {
   if (!query?.trim()) return [];
   const results = await tmdbFetch("/search/tv", { query });

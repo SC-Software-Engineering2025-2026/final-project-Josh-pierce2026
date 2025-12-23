@@ -1,6 +1,17 @@
 import React, { useState } from "react";
 import { RatingStars } from "./RatingStars.jsx";
 
+/**
+ * Shared renderer for logged media items.
+ *
+ * Supports two layouts:
+ * - "list": compact rows (good for dense scanning)
+ * - "grid": larger cards with bigger cover art
+ *
+ * It also handles per-item description collapsing for long overviews
+ * (mainly for movies/TV), and passes rating / notes / remove events
+ * back up through its callbacks.
+ */
 export function MediaList({
   items,
   onUpdateRating,

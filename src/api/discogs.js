@@ -1,8 +1,15 @@
+// Discogs album search helper.
+// Supports either a personal token or OAuth-style key/secret credentials.
 const DISCOGS_TOKEN = import.meta.env.VITE_DISCOGS_TOKEN;
 const DISCOGS_KEY = import.meta.env.VITE_DISCOGS_KEY;
 const DISCOGS_SECRET = import.meta.env.VITE_DISCOGS_SECRET;
 const DISCOGS_BASE = "https://api.discogs.com";
 
+/**
+ * Search Discogs for album releases.
+ * Uses either ?token=... or ?key=...&secret=... based on available env vars.
+ * Returns objects: { id, title, meta (year), extra (country), coverUrl }.
+ */
 export async function searchAlbums(query) {
   if (!query?.trim()) return [];
   if (!DISCOGS_TOKEN && (!DISCOGS_KEY || !DISCOGS_SECRET)) {

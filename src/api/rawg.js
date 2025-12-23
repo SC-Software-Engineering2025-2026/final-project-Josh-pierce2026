@@ -1,6 +1,12 @@
+// RAWG search helper used by the Games tab.
+// Normalizes RAWG game results into the common media item shape.
 const RAWG_API_KEY = import.meta.env.VITE_RAWG_API_KEY;
 const RAWG_BASE = "https://api.rawg.io/api";
 
+/**
+ * Search RAWG for games by title.
+ * Returns objects: { id, title, meta (platforms), extra (year), coverUrl }.
+ */
 export async function searchGames(query) {
   if (!query?.trim()) return [];
   if (!RAWG_API_KEY) {

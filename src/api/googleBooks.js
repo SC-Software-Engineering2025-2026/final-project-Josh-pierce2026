@@ -1,6 +1,12 @@
+// Google Books search helper used by the Books tab.
+// Normalizes Google volume results into the common media item shape.
 const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_BOOKS_KEY;
 const GOOGLE_BASE = "https://www.googleapis.com/books/v1";
 
+/**
+ * Search Google Books for volumes that match the query string.
+ * Returns objects: { id, title, meta (authors), extra (publishedDate), coverUrl }.
+ */
 export async function searchBooks(query) {
   if (!query?.trim()) return [];
 
