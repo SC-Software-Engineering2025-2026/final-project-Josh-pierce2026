@@ -316,6 +316,11 @@ body {
   flex: 1 1 0;
 }
 
+.media-actions {
+  display: flex;
+  align-items: center;
+}
+
 .media-title {
   font-size: 0.88rem;
   font-weight: 550;
@@ -396,6 +401,25 @@ body {
   font-size: 0.8rem;
   color: #6b7280;
   padding: 4px 0;
+}
+
+.add-button {
+  border-radius: 999px;
+  border: 1px solid rgba(249, 115, 22, 0.9);
+  background: rgba(249, 115, 22, 0.12);
+  color: #f97316;
+  padding: 6px 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-button:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .pending-add {
@@ -542,8 +566,9 @@ body {
   border: none;
   background: transparent;
   color: #9ca3af;
-  font-size: 0.7rem;
-  padding: 3px 7px;
+  font-size: 0.8rem;
+  padding: 6px 14px;
+  min-width: 56px;
   cursor: pointer;
 }
 

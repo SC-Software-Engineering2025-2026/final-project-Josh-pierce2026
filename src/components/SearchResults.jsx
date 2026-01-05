@@ -29,11 +29,11 @@ export function SearchResults({ results, onAdd, disabled }) {
           </div>
           <div className="media-actions">
             <button
-              className="ghost-button"
+              className="add-button"
               onClick={() => onAdd(r)}
               disabled={disabled}
             >
-              Add
+              +
             </button>
           </div>
         </li>

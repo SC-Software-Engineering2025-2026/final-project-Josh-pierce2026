@@ -4,6 +4,7 @@ import { searchBooks } from "../api/googleBooks.js";
 import { SortSelect } from "./SortSelect.jsx";
 import { SearchResults } from "./SearchResults.jsx";
 import { MediaList } from "./MediaList.jsx";
+import { RatingStars } from "./RatingStars.jsx";
 
 export function BooksTab() {
   const [query, setQuery] = useState("");
@@ -14,6 +15,7 @@ export function BooksTab() {
   const [view, setView] = useState("grid");
   const [showSearch, setShowSearch] = useState(true);
   const [items, setItems] = useLocalStorage("media_books", []);
+  const [draft, setDraft] = useState(null);
 
   const handleSearch = async () => {
     setError("");
@@ -29,9 +31,36 @@ export function BooksTab() {
     }
   };
 
-  const handleAdd = (result) => {
+  const handleStartAdd = (result) => {
     const exists = items.some((i) => i.apiId === result.id);
     if (exists) return;
+    setDraft({
+      result,
+      rating: 0,
+      notes: "",
+    });
+  };
+
+  const handleDraftRatingChange = (rating) => {
+    setDraft((prev) => (prev ? { ...prev, rating } : prev));
+  };
+
+  const handleDraftNotesChange = (notes) => {
+    setDraft((prev) => (prev ? { ...prev, notes } : prev));
+  };
+
+  const handleCancelDraft = () => {
+    setDraft(null);
+  };
+
+  const handleSaveDraft = () => {
+    if (!draft) return;
+    const { result, rating, notes } = draft;
+    const exists = items.some((i) => i.apiId === result.id);
+    if (exists) {
+      setDraft(null);
+      return;
+    }
     const now = new Date().toISOString();
     const newItem = {
       localId: `${result.id}-${now}`,
@@ -40,11 +69,12 @@ export function BooksTab() {
       meta: result.meta,
       extra: result.extra,
       coverUrl: result.coverUrl || null,
-      rating: 0,
-      notes: "",
+      rating: rating ?? 0,
+      notes: notes ?? "",
       createdAt: now,
     };
     setItems([newItem, ...items]);
+    setDraft(null);
   };
 
   const handleUpdateRating = (localId, rating) => {
@@ -104,9 +134,54 @@ export function BooksTab() {
           </div>
           <SearchResults
             results={results}
-            onAdd={handleAdd}
+            onAdd={handleStartAdd}
             disabled={loading}
           />
+          {draft && (
+            <div className="pending-add">
+              <div className="pending-header">
+                <div className="media-title">{draft.result.title}</div>
+                <div className="media-meta">
+                  {draft.result.meta}
+                  {draft.result.extra ? ` · ${draft.result.extra}` : ""}
+                </div>
+              </div>
+              <div className="pending-body">
+                <div>
+                  <RatingStars
+                    value={draft.rating ?? 0}
+                    onChange={handleDraftRatingChange}
+                  />
+                  <div className="small-caption">
+                    Set an initial rating (optional)
+                  </div>
+                </div>
+                <textarea
+                  className="note-input"
+                  rows={2}
+                  placeholder="Notes about this book (optional)"
+                  value={draft.notes}
+                  onChange={(e) => handleDraftNotesChange(e.target.value)}
+                />
+              </div>
+              <div className="pending-actions">
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={handleSaveDraft}
+                >
+                  Save to logged items
+                </button>
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={handleCancelDraft}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </section>
       )}
       <section className="card-panel secondary">

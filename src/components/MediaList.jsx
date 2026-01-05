@@ -65,6 +65,21 @@ export function MediaList({
     );
   };
 
+  const formatRatingDisplay = (rating) => {
+    const numeric = rating ?? 0;
+    return numeric === 0 ? "-" : numeric;
+  };
+
+  const handleRemoveClick = (item) => {
+    if (!onRemove) return;
+    const confirmed = window.confirm(
+      `Remove "${item.title}" from your logged items?`
+    );
+    if (confirmed) {
+      onRemove(item.localId);
+    }
+  };
+
   if (view === "grid") {
     return (
       <div className="items-grid">
@@ -104,7 +119,7 @@ export function MediaList({
                 </div>
                 <div className="media-meta-right">
                   <div className="badge-rating">
-                    <span>{item.rating ?? 0}</span>
+                    <span>{formatRatingDisplay(item.rating)}</span>
                     <span className="badge-rating-sub">/ 5</span>
                   </div>
                   <div className="badge-date">
@@ -113,7 +128,7 @@ export function MediaList({
                   <button
                     type="button"
                     className="ghost-button small"
-                    onClick={() => onRemove && onRemove(item.localId)}
+                    onClick={() => handleRemoveClick(item)}
                   >
                     Remove
                   </button>
@@ -162,7 +177,7 @@ export function MediaList({
               </div>
               <div className="media-meta-right">
                 <div className="badge-rating">
-                  <span>{item.rating ?? 0}</span>
+                  <span>{formatRatingDisplay(item.rating)}</span>
                   <span className="badge-rating-sub">/ 5</span>
                 </div>
                 <div className="badge-date">
@@ -171,7 +186,7 @@ export function MediaList({
                 <button
                   type="button"
                   className="ghost-button small"
-                  onClick={() => onRemove && onRemove(item.localId)}
+                  onClick={() => handleRemoveClick(item)}
                 >
                   Remove
                 </button>
