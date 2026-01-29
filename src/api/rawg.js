@@ -10,8 +10,7 @@ const RAWG_BASE = "https://api.rawg.io/api";
 export async function searchGames(query) {
   if (!query?.trim()) return [];
   if (!RAWG_API_KEY) {
-    console.warn("RAWG API key (VITE_RAWG_API_KEY) is not set.");
-    return [];
+    throw new Error("RAWG API key (VITE_RAWG_API_KEY) is not set.");
   }
 
   const params = new URLSearchParams({

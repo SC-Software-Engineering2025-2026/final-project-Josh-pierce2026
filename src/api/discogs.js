@@ -13,10 +13,9 @@ const DISCOGS_BASE = "https://api.discogs.com";
 export async function searchAlbums(query) {
   if (!query?.trim()) return [];
   if (!DISCOGS_TOKEN && (!DISCOGS_KEY || !DISCOGS_SECRET)) {
-    console.warn(
+    throw new Error(
       "Discogs auth is not configured. Set VITE_DISCOGS_TOKEN or VITE_DISCOGS_KEY and VITE_DISCOGS_SECRET."
     );
-    return [];
   }
 
   const params = new URLSearchParams({

@@ -10,8 +10,7 @@ const TMDB_IMG_BASE = "https://image.tmdb.org/t/p/w342";
  */
 async function tmdbFetch(path, params = {}) {
   if (!TMDB_API_KEY) {
-    console.warn("TMDB API key (VITE_TMDB_API_KEY) is not set.");
-    return [];
+    throw new Error("TMDB API key (VITE_TMDB_API_KEY) is not set.");
   }
 
   const searchParams = new URLSearchParams({
